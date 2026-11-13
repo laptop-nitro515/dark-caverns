@@ -1,0 +1,17 @@
+{
+    "name": "DarkCaverns.Game",
+    "rootNamespace": "DarkCaverns.Game",
+    "references": [
+        "DarkCaverns.Core",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
