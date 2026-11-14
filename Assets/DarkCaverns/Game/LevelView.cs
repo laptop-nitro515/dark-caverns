@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using DarkCaverns.Core.World;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+// UnityEngine also has a Terrain type; this file means the dungeon one.
+using Terrain = DarkCaverns.Core.World.Terrain;
 
 namespace DarkCaverns.Game
 {
