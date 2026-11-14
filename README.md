@@ -5,8 +5,9 @@ Dungeon**: Moria's town, stores, races, spellbooks and deep descent, with Pixel
 Dungeon's sprite art, compact levels, item systems and touch-friendly controls.
 Built in Unity 6 LTS and C#.
 
-This is early work. Milestone 1 is a walkable dungeon: generated floors drawn with
-SPD's tiles, field of view and fog of war, stairs through all 40 floors.
+This is early work. So far you can walk the town, with its six store buildings, and
+descend through all 40 generated floors, drawn with SPD's tiles, with field of view,
+fog of war and Moria's Word of Recall. Stores have no stock until items are added.
 
 ## Playing in the editor
 
@@ -18,7 +19,9 @@ SPD's tiles, field of view and fog of war, stairs through all 40 floors.
 
 Controls: arrow keys, WASD or the numpad to move (Q, E, Z, C or numpad 7, 9, 1, 3 for
 diagonals), space or numpad 5 to wait, click or tap a place you have seen to walk
-there. Walk onto the down stairs to descend.
+there. Walk onto stairs to take them, and into a store's door to enter it. R reads a
+Word of Recall (a stand-in until scrolls exist): after 15 to 35 turns it takes you
+from the dungeon to town, or from town back to the deepest floor you reached.
 
 ## Layout
 
@@ -26,7 +29,7 @@ there. Walk onto the down stairs to descend.
 Assets/DarkCaverns/
   Core/        Game rules in plain C#, no UnityEngine references (DarkCaverns.Core.asmdef)
     Random/    Seeded RNG and Moria-style dice
-    World/     Terrain, levels, the 5 regions of 8 floors, level generation
+    World/     Terrain, levels, the 5 regions of 8 floors, town and level generation
     Mechanics/ Field of view (ported from SPD) and pathfinding
     Game/      GameSession: one run of the game
   Game/        Unity layer: tilemap and sprite views, input, camera, HUD

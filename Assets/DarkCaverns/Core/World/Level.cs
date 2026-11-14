@@ -27,6 +27,12 @@ namespace DarkCaverns.Core.World
 
         public List<Room> Rooms { get; } = new List<Room>();
 
+        /// <summary>Store entrances in town, by cell.</summary>
+        public Dictionary<int, Shop> Shops { get; } = new Dictionary<int, Shop>();
+
+        /// <summary>Depth 0 is the town above the dungeon.</summary>
+        public bool IsTown => Depth == 0;
+
         public Level(int width, int height, int depth)
         {
             if (width < 3 || height < 3)

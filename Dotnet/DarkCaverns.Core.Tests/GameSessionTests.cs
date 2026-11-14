@@ -11,7 +11,7 @@ namespace DarkCaverns.Core.Tests
         [Test]
         public void StartsOnFloorOneNextToTheEntrance()
         {
-            var game = new GameSession(2026);
+            var game = new GameSession(2026, startDepth: 1);
             Assert.That(game.Depth, Is.EqualTo(1));
             Assert.That(game.Level.Map[game.HeroCell], Is.EqualTo(Terrain.Floor));
             Assert.That(game.Level.Visible[game.HeroCell], Is.True);
@@ -22,7 +22,7 @@ namespace DarkCaverns.Core.Tests
         [Test]
         public void CannotWalkIntoWalls()
         {
-            var game = new GameSession(5);
+            var game = new GameSession(5, startDepth: 1);
             var level = game.Level;
             var moved = 0;
             for (var dy = -1; dy <= 1; dy++)
@@ -59,7 +59,7 @@ namespace DarkCaverns.Core.Tests
         [Test]
         public void WalkingToTheExitDescendsAndStairsLeadBack()
         {
-            var game = new GameSession(77);
+            var game = new GameSession(77, startDepth: 1);
             var first = game.Level;
 
             // Reveal the floor so the path planner can use it.
@@ -102,7 +102,7 @@ namespace DarkCaverns.Core.Tests
         {
             for (ulong seed = 1; seed < 50; seed++)
             {
-                var game = new GameSession(seed);
+                var game = new GameSession(seed, startDepth: 1);
                 var level = game.Level;
                 var door = System.Array.IndexOf(level.Map, Terrain.Door);
                 if (door < 0)
