@@ -13,13 +13,16 @@ namespace DarkCaverns.Core.World
         Entrance,   // up stairs
         Exit,       // down stairs
         Water,
+        Grass,
+        ShopEntrance, // a store's front door in town; which store is in Level.Shops
     }
 
     public static class TerrainInfo
     {
         public static bool IsPassable(this Terrain t) =>
             t == Terrain.Floor || t == Terrain.Door || t == Terrain.OpenDoor
-            || t == Terrain.Entrance || t == Terrain.Exit || t == Terrain.Water;
+            || t == Terrain.Entrance || t == Terrain.Exit || t == Terrain.Water
+            || t == Terrain.Grass || t == Terrain.ShopEntrance;
 
         /// <summary>Closed doors and walls block line of sight.</summary>
         public static bool BlocksSight(this Terrain t) =>

@@ -19,6 +19,7 @@ namespace DarkCaverns.Game
         // Indices into SPD's 16x16 tile sheets (see SPD's tiles/DungeonTileSheet.java, flat walls).
         private const int Floor = 0;
         private const int FloorDeco = 1;
+        private const int Grass = 2;
         private const int Entrance = 16;
         private const int Exit = 17;
         private const int Water = 32 + 15;
@@ -30,6 +31,8 @@ namespace DarkCaverns.Game
         private static readonly Color Remembered = new Color(0.35f, 0.35f, 0.45f);
 
         private readonly Dictionary<int, Tile> tiles = new Dictionary<int, Tile>();
+        private readonly List<GameObject> signs = new List<GameObject>();
+        private Font signFont;
         private Tilemap tilemap;
         private SpriteSheet sheet;
         private string sheetName;
@@ -70,7 +73,55 @@ namespace DarkCaverns.Game
             }
 
             tilemap.ClearAllTiles();
+            PlaceSigns();
             Refresh();
+        }
+
+        /// <summary>Store names over their doors, so the town reads at a glance.</summary>
+        private void PlaceSigns()
+        {
+            foreach (var sign in signs)
+            {
+                Destroy(sign);
+            }
+
+            signs.Clear();
+            if (level.Shops.Count == 0)
+            {
+                return;
+            }
+
+            if (signFont == null)
+            {
+                signFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            }
+
+            foreach (var pair in level.Shops)
+            {
+                int x = level.X(pair.Key), y = level.Y(pair.Key);
+
+                // Doors face the street, so the sign goes on the building side of the door.
+                var buildingAbove = y > 0 && !level[x, y - 1].IsPassable();
+                var offset = buildingAbove ? new Vector3(0f, 1.1f, 0f) : new Vector3(0f, -1.1f, 0f);
+
+                var go = new GameObject("Sign " + pair.Value.Name());
+                go.transform.SetParent(transform.parent, false);
+                go.transform.position = CellCenter(x, y) + offset;
+
+                var text = go.AddComponent<TextMesh>();
+                text.text = $"{(int) pair.Value}. {pair.Value.Name()}";
+                text.font = signFont;
+                text.fontSize = 48;
+                text.characterSize = 0.06f;
+                text.anchor = TextAnchor.MiddleCenter;
+                text.alignment = TextAlignment.Center;
+                text.color = new Color(1f, 0.85f, 0.45f);
+
+                var meshRenderer = go.GetComponent<MeshRenderer>();
+                meshRenderer.sharedMaterial = signFont.material;
+                meshRenderer.sortingOrder = 20;
+                signs.Add(go);
+            }
         }
 
         /// <summary>Redraws terrain and fog. Cheap enough to call every turn at these map sizes.</summary>
@@ -106,6 +157,8 @@ namespace DarkCaverns.Game
                 case Terrain.Entrance: return Entrance;
                 case Terrain.Exit: return Exit;
                 case Terrain.Water: return Water;
+                case Terrain.Grass: return Grass;
+                case Terrain.ShopEntrance: return FlatDoor;
                 default: return deco ? FloorDeco : Floor;
             }
         }

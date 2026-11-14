@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using DarkCaverns.Core.Game;
+using DarkCaverns.Core.World;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -14,7 +15,7 @@ namespace DarkCaverns.Game
     /// <summary>
     /// Runs a GameSession and connects it to the views and to input:
     /// arrow keys, WASD or numpad to step (diagonals on the numpad or Q/E/Z/C),
-    /// space or numpad 5 to wait, and click or tap a seen cell to walk there.
+    /// space or numpad 5 to wait, R for Word of Recall, and click or tap a seen cell to walk there.
     /// </summary>
     public sealed class GameController : MonoBehaviour
     {
@@ -32,6 +33,7 @@ namespace DarkCaverns.Game
         private Vector2Int heldDirection;
         private float heldTime;
         private GUIStyle logStyle;
+        private Shop? openShop;
 
         public static GameController Create()
         {
@@ -59,6 +61,11 @@ namespace DarkCaverns.Game
             var seed = (ulong) DateTime.UtcNow.Ticks;
             session = new GameSession(seed);
             session.LevelChanged += OnLevelChanged;
+            session.ShopEntered += shop =>
+            {
+                openShop = shop;
+                walkPath.Clear();
+            };
             OnLevelChanged();
             Debug.Log($"Dark Caverns: new game, seed {seed}");
         }
@@ -71,7 +78,8 @@ namespace DarkCaverns.Game
             }
 
             walkPath.Clear();
-            levelView.Show(session.Level, session.Region.Tileset);
+            openShop = null;
+            levelView.Show(session.Level, session.Tileset);
             heroView.Place(levelView.CellCenter(session.HeroX, session.HeroY));
             SnapCamera();
         }
@@ -79,6 +87,26 @@ namespace DarkCaverns.Game
         private void Update()
         {
             stepCooldown -= Time.deltaTime;
+
+            if (openShop != null)
+            {
+                // The store window is modal; any key or click closes it.
+                if (ClosePressed() || TryReadPointer(out _))
+                {
+                    openShop = null;
+                }
+
+                DrainMessages();
+                FollowHero();
+                return;
+            }
+
+            if (RecallPressed())
+            {
+                // Stands in for reading a Scroll of Word of Recall until items exist.
+                walkPath.Clear();
+                session.ReadWordOfRecall();
+            }
 
             var direction = ReadDirection(out var pressedThisFrame);
             if (direction != Vector2Int.zero)
@@ -196,13 +224,38 @@ namespace DarkCaverns.Game
             }
 
             var line = logStyle.fontSize + 6;
+            var where = session.InTown ? "Town" : $"{session.LocationName}  ·  Depth {session.Depth}";
+            var recall = session.RecallActive ? "  ·  Recall is charging" : "";
             GUI.Label(new Rect(12, 8, Screen.width - 24, line),
-                $"{session.Region.Name}  ·  Depth {session.Depth}  ·  Turn {session.Turn}", logStyle);
+                $"{where}  ·  Turn {session.Turn}{recall}", logStyle);
+
+            if (openShop != null)
+            {
+                DrawShopWindow(openShop.Value, line);
+            }
 
             for (var i = 0; i < log.Count; i++)
             {
                 GUI.Label(new Rect(12, Screen.height - (log.Count - i) * line - 8, Screen.width - 24, line), log[i], logStyle);
             }
+        }
+
+        private void DrawShopWindow(Shop shop, int line)
+        {
+            var w = Mathf.Min(Screen.width - 32, 520);
+            var h = line * 6;
+            var rect = new Rect((Screen.width - w) / 2f, (Screen.height - h) / 2f, w, h);
+            GUI.Box(rect, GUIContent.none);
+            GUI.Box(rect, GUIContent.none); // twice for a darker panel on the default skin
+
+            var inner = new Rect(rect.x + 16, rect.y + 12, rect.width - 32, line);
+            GUI.Label(inner, $"{(int) shop}. {shop.Name()}", logStyle);
+            inner.y += line * 1.5f;
+            GUI.Label(inner, "The shelves are empty for now.", logStyle);
+            inner.y += line;
+            GUI.Label(inner, "Stock arrives when items are added.", logStyle);
+            inner.y += line * 1.5f;
+            GUI.Label(inner, "Press any key or click to leave.", logStyle);
         }
 
         // ---- Input -------------------------------------------------------------------------
@@ -253,6 +306,18 @@ namespace DarkCaverns.Game
         {
             var k = Keyboard.current;
             return k != null && (k.spaceKey.wasPressedThisFrame || k.numpad5Key.wasPressedThisFrame || k.periodKey.wasPressedThisFrame);
+        }
+
+        private static bool RecallPressed()
+        {
+            var k = Keyboard.current;
+            return k != null && k.rKey.wasPressedThisFrame;
+        }
+
+        private static bool ClosePressed()
+        {
+            var k = Keyboard.current;
+            return k != null && k.anyKey.wasPressedThisFrame;
         }
 
         private static bool TryReadPointer(out Vector2 screen)
@@ -310,6 +375,10 @@ namespace DarkCaverns.Game
 
         private static bool WaitPressed() =>
             Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Keypad5) || Input.GetKeyDown(KeyCode.Period);
+
+        private static bool RecallPressed() => Input.GetKeyDown(KeyCode.R);
+
+        private static bool ClosePressed() => Input.anyKeyDown && !Input.GetMouseButtonDown(0);
 
         private static bool TryReadPointer(out Vector2 screen)
         {
